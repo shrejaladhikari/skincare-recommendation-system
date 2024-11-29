@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skincare Recommendation System</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #ffffff, #f0f0f5);
+            color: #333;
+        }
+
+        /* Header styles */
+        header {
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Form styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, button:hover {
+            outline: none;
+            border-color: #2575fc;
+            box-shadow: 0 0 8px rgba(37, 117, 252, 0.3);
+        }
+
+        button {
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #2575fc, #6a11cb);
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            font-size: 1rem;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f5;
+            color: #333;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        tr:hover {
+            background: #f0f0f5;
+        }
+
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            .container {
+                margin: 15px;
+                padding: 15px;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            button {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Skincare Product Recommendations</h1>
+    </header>
+    <div class="container">
+        <form id="recommendationForm">
+            <label for="skin_type">Skin Type:</label>
+            <select id="skin_type" name="skin_type" required>
+                <option value="Combination">Combination</option>
+                <option value="Dry">Dry</option>
+                <option value="Normal">Normal</option>
+                <option value="Oily">Oily</option>
+                <option value="Sensitive">Sensitive</option>
+            </select>
+
+            <label for="min_price">Minimum Price (£):</label>
+            <input type="number" id="min_price" name="min_price" placeholder="Enter minimum price" min="0">
+
+            <label for="max_price">Maximum Price (£):</label>
+            <input type="number" id="max_price" name="max_price" placeholder="Enter maximum price" min="0">
+
+            <label for="min_rank">Minimum Rank:</label>
+            <input type="number" id="min_rank" name="min_rank" placeholder="Enter minimum rank" step="0.1" min="0" max="5">
+
+            <button type="submit">Get Recommendations</button>
+        </form>
+
+        <table id="resultsTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Brand</th>
+                    <th>Product</th>
+                    <th>Price (£)</th>
+                    <th>Rank</th>
+                    <th>Ingredients</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        document.getElementById('recommendationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            // Get form data
+            const skinType = document.getElementById('skin_type').value;
+            const minPrice = document.getElementById('min_price').value || 0;
+            const maxPrice = document.getElementById('max_price').value || 1000;
+            const minRank = document.getElementById('min_rank').value || 0;
+
+            // API URL
+            const apiUrl = `http://127.0.0.1:5000/recommend?skin_type=${skinType}&min_price=${minPrice}&max_price=${maxPrice}&min_rank=${minRank}`;
+
+            // Fetch recommendations
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    alert(data.error || 'An error occurred while fetching recommendations.');
+                }
+            } catch (error) {
+                alert('Error connecting to the server. Please make sure the backend is running.');
+            }
+        });
+
+        function displayResults(data) {
+            const table = document.getElementById('resultsTable');
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.Label}</td>
+                    <td>${item.brand}</td>
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                    <td>${item.rank}</td>
+                    <td>${item.ingredients}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            table.style.display = 'table';
+        }
+    </script>
+</body>
+</html>
